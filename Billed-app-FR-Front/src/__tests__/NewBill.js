@@ -1,7 +1,7 @@
 import { fireEvent, screen } from "@testing-library/dom"
 import NewBillUI from "../views/NewBillUI.js"
 import NewBill from "../containers/NewBill.js"
-import store from "../__mocks__/store.js"
+import store from "../app/Store.js"
 
 
 describe("Given I am connected as an employee", () => {
@@ -28,29 +28,31 @@ describe("Given I am connected as an employee", () => {
       inputFile.addEventListener("change", handleChangeFile)
       fireEvent.change(inputFile, {
         target: {
-          files: [new File(["image.jpg"], "image.jpg", { type: "image/jpg" })],
+          file: new File(["image.jpg"], "image.jpg", { type: "image/jpg" }),
+          email: JSON.parse(localStorage.getItem("user")).email
         }
       })
-      const numberOfFile = screen.getByTestId("file").files.length
-      expect(numberOfFile).toEqual(1)
+      
+      const file = screen.getByTestId("file").file
+      expect(file).toBeTruthy()
     })
   })
   describe("And I upload a non-image file", () => {
     test("Then the error message should be display", async () => {
       localStorage.setItem('user', JSON.stringify({ type: 'Employee', email: 'employee@test.tld' }))
       document.body.innerHTML = NewBillUI()
+      const alert = window.alert = jest.fn()
       const newBill = new NewBill({ document, onNavigate: () => { return }, store: store, localStorage: window.localStorage })
       const handleChangeFile = jest.fn(() => newBill.handleChangeFile)
-      const alert = global.alert = jest.fn()
       const inputFile = screen.getByTestId("file")
       inputFile.addEventListener("change", handleChangeFile)
       fireEvent.change(inputFile, {
-          target: {
-              files: [new File(["sample.txt"], "sample.txt", { type: "text/txt" })],
-          }
+        target: {
+          file: new File(["sample.txt"], "sample.txt", { type: "text/txt" }),
+        }
       })
       expect(handleChangeFile).toBeCalled()
-      expect(inputFile.files[0].name).toBe("sample.txt")
+      expect(inputFile.file.name).toBe("sample.txt")
       expect(alert).toBeCalled()
     })
   })
@@ -81,7 +83,7 @@ describe("Given I am connected as an employee", () => {
       document.querySelector(`input[data-testid="pct"]`).value = validBill.pct
       document.querySelector(`textarea[data-testid="commentary"]`).value = validBill.commentary
       newBill.fileUrl = validBill.fileUrl
-      newBill.fileName = validBill.fileName 
+      newBill.fileName = validBill.fileName
       form.addEventListener('click', handleSubmit)
       fireEvent.click(form)
       expect(handleSubmit).toHaveBeenCalled()
