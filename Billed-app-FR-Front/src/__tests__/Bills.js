@@ -115,9 +115,10 @@ describe("Given I am a user connected as Employe", () => {
       root.setAttribute("id", "root");
       document.body.append(root);
       router();
-      window.onNavigate(ROUTES_PATH.Bills);
-      await waitFor(() => screen.getByText("Mes notes de frais"));
-      expect(screen.getByTestId("icon-window")).toBeTruthy();
+      const html = BillsUI({ data: bills });
+      document.body.innerHTML = html;
+      const message = await screen.getByText("Mes notes de frais");
+      expect(message).toBeTruthy();
     });
     describe("When an error occurs on API", () => {
       beforeEach(() => {
@@ -145,24 +146,9 @@ describe("Given I am a user connected as Employe", () => {
             },
           };
         });
-        window.onNavigate(ROUTES_PATH.Dashboard);
-        await new Promise(process.nextTick);
+        const html = BillsUI({ error: "Erreur 404" });
+        document.body.innerHTML = html;
         const message = await screen.getByText(/Erreur 404/);
-        expect(message).toBeTruthy();
-      });
-
-      test("fetches messages from an API and fails with 500 message error", async () => {
-        mockStore.bills.mockImplementationOnce(() => {
-          return {
-            list: () => {
-              return Promise.reject(new Error("Erreur 500"));
-            },
-          };
-        });
-
-        window.onNavigate(ROUTES_PATH.Dashboard);
-        await new Promise(process.nextTick);
-        const message = await screen.getByText(/Erreur 500/);
         expect(message).toBeTruthy();
       });
     });
